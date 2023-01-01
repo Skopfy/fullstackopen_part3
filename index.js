@@ -44,34 +44,41 @@ const generateId = () => {
 
 app.get('/api/persons', (request, response) => {
     Person.find({}).then(result => {
+	data = result
 	response.json(result)
     })
 })
 
 app.get('/api/info', (request, response) => {
-    const len = data.length
-    const date = new Date()
-    response.send(`The phonebook site has ${len} people.`+ `\n` + date)
-})
-
-app.get('/api/persons/:id', (request, response) => {
-    //const id = Number(request.params.id)
-    //const person = data.find(person => person.id === id)
-    Person.findById(request.params.id).then(note => {
-	response.json(note)
+    Person.find({}).then(result => {
+	data = result
+	const len = data.length
+	const date = new Date()
+	response.send(`The phonebook site has ${len} people.`+ `\n` + date)
     })
-    /*if (person) {
-	response.json(person)
-    } else {
-	response.status(404).end()
-    }*/
 })
 
-app.delete('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-  data = data.filter(person => person.id !== id)
+app.get('/api/persons/:id', (request, response, next) => {
+    Person.findById(request.params.id)
+	.then(person => {
+	    if (person) {
+		response.json(person)
+	    } else {
+		response.status(404).end()
+	    }
+	})
+	.catch(error => next(error))
+})
 
-  response.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+    const id = Number(request.params.id)
+    data = data.filter(person => person.id !== id)
+
+    Person.findByIdAndRemove(request.params.id)
+	.then(result => {
+	    response.status(204).end()
+	})
+	.catch(error => next(error))
 })
 
 app.post('/api/persons', (request, response) => {
@@ -86,13 +93,6 @@ app.post('/api/persons', (request, response) => {
     })
   }
 
-    const existing = data.find(person => person.name === body.name)
-    if (existing) {
-	return response.status(400).json({ 
-	    error: 'name duplicate, exists already' 
-	})
-  }
-
     const person = new Person({
 	id: generateId(),
 	name: body.name,
@@ -105,6 +105,34 @@ app.post('/api/persons', (request, response) => {
     response.json(savedPerson)
   })
 })
+
+app.put('/api/persons/:id', (request, response, next) => {
+  const body = request.body
+
+  const person = {
+    number: body.number,
+  }
+
+  Person.findByIdAndUpdate(request.params.id, person, { new: true })
+    .then(updatedPerson => {
+      response.json(updatedPerson)
+    })
+    .catch(error => next(error))
+})
+
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } 
+
+  next(error)
+}
+
+// this has to be the last loaded middleware.
+app.use(errorHandler)
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {
