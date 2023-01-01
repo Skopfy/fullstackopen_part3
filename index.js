@@ -10,49 +10,17 @@ morgan.token('data', function (req, res) { return JSON.stringify(req.body) })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :data'))
 app.use(cors())
 
-let data = [
-    { 
-      "id": 1,
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": 2,
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": 3,
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": 4,
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    },
-]
-
 const Person = require('./models/person')
-
-const generateId = () => {
-  const randId = data.length > 0
-	? Math.floor(Math.random() * 100000)
-    : 0
-  return randId
-}
 
 app.get('/api/persons', (request, response) => {
     Person.find({}).then(result => {
-	data = result
 	response.json(result)
     })
 })
 
 app.get('/api/info', (request, response) => {
     Person.find({}).then(result => {
-	data = result
-	const len = data.length
+	const len = result.length
 	const date = new Date()
 	response.send(`The phonebook site has ${len} people.`+ `\n` + date)
     })
@@ -72,7 +40,6 @@ app.get('/api/persons/:id', (request, response, next) => {
 
 app.delete('/api/persons/:id', (request, response, next) => {
     const id = Number(request.params.id)
-    data = data.filter(person => person.id !== id)
 
     Person.findByIdAndRemove(request.params.id)
 	.then(result => {
@@ -94,12 +61,9 @@ app.post('/api/persons', (request, response) => {
   }
 
     const person = new Person({
-	id: generateId(),
 	name: body.name,
 	number: body.number,
     })
-
-    data = data.concat(person)
 
     person.save().then(savedPerson => {
     response.json(savedPerson)
