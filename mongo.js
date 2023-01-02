@@ -20,36 +20,36 @@ const personSchema = new mongoose.Schema({
 const Person = mongoose.model('Person', personSchema)
 
 if (name && number) {
-    mongoose
-  .connect(url)
-  .then((result) => {
-    console.log('connected')
+  mongoose
+    .connect(url)
+    .then(() => {
+      console.log('connected')
 
-    const person = new Person({
-      name: name,
-      number: number,
+      const person = new Person({
+        name: name,
+        number: number,
+      })
+
+      return person.save()
     })
-
-    return person.save()
-  })
-  .then(() => {
-    console.log('Entry saved!')
-    return mongoose.connection.close()
-  })
-  .catch((err) => console.log(err))
+    .then(() => {
+      console.log('Entry saved!')
+      return mongoose.connection.close()
+    })
+    .catch((err) => console.log(err))
 } else if (!name && !number) {
- mongoose
-  .connect(url)
-  .then((result) => {
-    console.log('connected')
+  mongoose
+    .connect(url)
+    .then(() => {
+      console.log('connected')
 
-    Person.find({}).then(result => {
-  result.forEach(person => {
-    console.log(person)
-  })
-  mongoose.connection.close()
-    })
-  .catch((err) => console.log(err))
+      Person.find({}).then(result => {
+        result.forEach(person => {
+          console.log(person)
+        })
+        mongoose.connection.close()
+      })
+        .catch((err) => console.log(err))
     })
 }
 
